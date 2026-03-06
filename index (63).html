@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComptaGestion — Les comptes de charges et de produits</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2236;
+  --bg-card-hover: #1f2a42;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #2a3654;
+  --glow-blue: rgba(59,130,246,0.3);
+  --glow-green: rgba(16,185,129,0.3);
+  --charge-color: #f97316;
+  --produit-color: #22d3ee;
+  --debit-color: #f59e0b;
+  --credit-color: #a78bfa;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,0.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(6,182,212,0.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;width:3px;height:3px;background:rgba(59,130,246,0.4);border-radius:50%;animation:float-particle linear infinite}
+@keyframes float-particle{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(50px);opacity:0}}
+.app-container{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:40px 20px 30px;animation:fadeInDown 0.8s ease}
+.header-badge{display:inline-block;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));padding:6px 18px;border-radius:20px;font-size:0.75rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+.header h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;background:linear-gradient(135deg,#fff 0%,var(--accent-cyan) 50%,var(--accent-blue) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:8px}
+.header p{font-size:1.05rem;color:var(--text-secondary);font-weight:300}
+.progress-container{background:var(--bg-card);border-radius:16px;padding:20px 24px;margin-bottom:24px;border:1px solid var(--border);animation:fadeIn 0.6s ease 0.2s both}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.progress-header span{font-size:0.85rem;color:var(--text-secondary);font-weight:500}
+.progress-score{font-family:'Space Mono',monospace;font-size:0.9rem;color:var(--accent-green);font-weight:700}
+.progress-bar{height:8px;background:var(--bg-primary);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-cyan));border-radius:4px;transition:width 0.6s cubic-bezier(0.22,1,0.36,1);width:0%}
+.progress-steps{display:flex;justify-content:space-between;margin-top:12px;gap:4px}
+.step-dot{flex:1;height:4px;border-radius:2px;background:var(--bg-primary);transition:background 0.4s,box-shadow 0.4s;cursor:pointer}
+.step-dot.completed{background:var(--accent-green);box-shadow:0 0 8px var(--glow-green)}
+.step-dot.active{background:var(--accent-blue);box-shadow:0 0 8px var(--glow-blue)}
+.exercise-container{animation:fadeInUp 0.5s ease}
+.exercise-card{background:var(--bg-card);border-radius:20px;padding:32px;border:1px solid var(--border);margin-bottom:20px}
+.exercise-number{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--accent-cyan);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.exercise-title{font-size:1.6rem;font-weight:800;margin-bottom:6px}
+.exercise-subtitle{font-size:0.95rem;color:var(--text-secondary);line-height:1.6;margin-bottom:24px}
+.theory-box{background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.05));border:1px solid rgba(59,130,246,0.2);border-radius:14px;padding:20px 24px;margin-bottom:24px;position:relative;overflow:hidden}
+.theory-box::before{content:'💡';position:absolute;top:-10px;right:10px;font-size:3rem;opacity:0.15}
+.theory-box h3{font-size:0.95rem;color:var(--accent-blue);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.theory-box p,.theory-box li{font-size:0.9rem;color:var(--text-secondary);line-height:1.7}
+.theory-box ul{list-style:none;padding:0}
+.theory-box ul li::before{content:'▸ ';color:var(--accent-cyan);font-weight:700}
+.schema-container{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin:20px 0}
+.schema-block{background:var(--bg-primary);border-radius:14px;padding:18px 24px;text-align:center;border:2px solid var(--border);min-width:140px;transition:all 0.3s;animation:popIn 0.5s ease both}
+.schema-block:hover{transform:translateY(-4px);border-color:var(--accent-blue);box-shadow:0 8px 30px rgba(59,130,246,0.15)}
+.schema-block .icon{font-size:2rem;margin-bottom:6px}
+.schema-block .label{font-size:0.8rem;color:var(--text-muted);font-weight:500}
+.schema-block .value{font-size:1.1rem;font-weight:700;margin-top:2px}
+.schema-block.charge{border-color:var(--charge-color)}
+.schema-block.charge .value{color:var(--charge-color)}
+.schema-block.produit{border-color:var(--produit-color)}
+.schema-block.produit .value{color:var(--produit-color)}
+.schema-block.bilan{border-color:var(--accent-blue)}
+.schema-block.bilan .value{color:var(--accent-blue)}
+.schema-arrow{display:flex;align-items:center;font-size:1.5rem;color:var(--text-muted);animation:pulse-arrow 1.5s infinite}
+@keyframes pulse-arrow{0%,100%{opacity:0.4;transform:translateX(0)}50%{opacity:1;transform:translateX(4px)}}
+.t-account{background:var(--bg-primary);border-radius:14px;overflow:hidden;border:1px solid var(--border);margin:16px 0;max-width:400px}
+.t-account-header{text-align:center;padding:10px;font-weight:700;font-size:0.9rem;border-bottom:2px solid var(--border)}
+.t-account-body{display:grid;grid-template-columns:1fr 1fr;min-height:60px}
+.t-account-debit,.t-account-credit{padding:12px 16px;font-size:0.85rem;text-align:center}
+.t-account-debit{border-right:2px solid var(--border);color:var(--debit-color)}
+.t-account-credit{color:var(--credit-color)}
+.t-account-label{font-size:0.7rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:0.6;margin-bottom:4px}
+.quiz-grid{display:grid;gap:12px;margin:16px 0}
+.quiz-item{background:var(--bg-primary);border:2px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:all 0.3s}
+.quiz-item .question-text{flex:1;font-size:0.92rem;line-height:1.5}
+.quiz-item .options{display:flex;gap:8px;flex-shrink:0}
+
+/* === OPTION BUTTONS WITH IMPROVED SELECTION === */
+.option-btn{padding:8px 18px;border-radius:10px;border:2px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-family:'Outfit',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.25s;white-space:nowrap;position:relative}
+.option-btn:hover{border-color:var(--accent-blue);background:rgba(59,130,246,0.1);transform:translateY(-2px)}
+
+/* DEFAULT SELECTED - bright blue glow + checkmark */
+.option-btn.selected{border-color:var(--accent-blue)!important;background:rgba(59,130,246,0.25)!important;color:#fff!important;box-shadow:0 0 14px rgba(59,130,246,0.4),inset 0 0 20px rgba(59,130,246,0.1);transform:scale(1.05)}
+.option-btn.selected::after{content:'✓';position:absolute;top:-7px;right:-7px;width:20px;height:20px;background:var(--accent-blue);border-radius:50%;font-size:0.65rem;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;box-shadow:0 2px 8px rgba(59,130,246,0.5)}
+
+/* CHARGE SELECTED - orange glow */
+.option-btn.charge-btn.selected{border-color:var(--charge-color)!important;background:rgba(249,115,22,0.3)!important;color:#fff!important;box-shadow:0 0 14px rgba(249,115,22,0.4),inset 0 0 20px rgba(249,115,22,0.08)}
+.option-btn.charge-btn.selected::after{background:var(--charge-color);box-shadow:0 2px 8px rgba(249,115,22,0.5)}
+
+/* PRODUIT SELECTED - cyan glow */
+.option-btn.produit-btn.selected{border-color:var(--produit-color)!important;background:rgba(34,211,238,0.25)!important;color:#fff!important;box-shadow:0 0 14px rgba(34,211,238,0.4),inset 0 0 20px rgba(34,211,238,0.08)}
+.option-btn.produit-btn.selected::after{background:var(--produit-color);box-shadow:0 2px 8px rgba(34,211,238,0.5)}
+
+/* DEBIT SELECTED - yellow/amber glow */
+.option-btn.debit-btn.selected{border-color:var(--debit-color)!important;background:rgba(245,158,11,0.3)!important;color:#fff!important;box-shadow:0 0 14px rgba(245,158,11,0.4),inset 0 0 20px rgba(245,158,11,0.08)}
+.option-btn.debit-btn.selected::after{background:var(--debit-color);box-shadow:0 2px 8px rgba(245,158,11,0.5)}
+
+/* CREDIT SELECTED - purple glow */
+.option-btn.credit-btn.selected{border-color:var(--credit-color)!important;background:rgba(167,139,250,0.3)!important;color:#fff!important;box-shadow:0 0 14px rgba(167,139,250,0.4),inset 0 0 20px rgba(167,139,250,0.08)}
+.option-btn.credit-btn.selected::after{background:var(--credit-color);box-shadow:0 2px 8px rgba(167,139,250,0.5)}
+
+/* After checking - correct/incorrect overrides */
+.option-btn.correct{border-color:var(--accent-green)!important;background:rgba(16,185,129,0.15)!important;color:var(--accent-green)!important;box-shadow:none;transform:scale(1);animation:correct-pulse 0.5s ease}
+.option-btn.correct::after{display:none}
+.option-btn.incorrect{border-color:var(--accent-red)!important;background:rgba(239,68,68,0.15)!important;color:var(--accent-red)!important;box-shadow:none;transform:scale(1);animation:shake 0.4s ease}
+.option-btn.incorrect::after{display:none}
+
+@keyframes correct-pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.quiz-item.answered-correct{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.03)}
+.quiz-item.answered-incorrect{border-color:rgba(239,68,68,0.2);background:rgba(239,68,68,0.03)}
+.quiz-item .feedback{font-size:0.8rem;margin-top:8px;padding:8px 12px;border-radius:8px;display:none}
+.quiz-item .feedback.show{display:block}
+.quiz-item .feedback.correct-fb{background:rgba(16,185,129,0.1);color:var(--accent-green)}
+.quiz-item .feedback.incorrect-fb{background:rgba(239,68,68,0.1);color:var(--accent-red)}
+.invoice{background:linear-gradient(135deg,#1e293b,#1a2332);border:1px solid var(--border);border-radius:14px;padding:24px;margin:16px 0;position:relative}
+.invoice::before{content:'📄 FACTURE';position:absolute;top:-12px;left:20px;background:var(--accent-blue);color:white;font-size:0.7rem;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:6px}
+.invoice-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-top:8px}
+.invoice-header .company{font-weight:700;font-size:1.05rem}
+.invoice-header .details{text-align:right;font-size:0.85rem;color:var(--text-secondary)}
+.invoice-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem}
+.invoice-line.total{border-bottom:none;border-top:2px solid var(--accent-blue);margin-top:8px;padding-top:12px;font-weight:700;font-size:1rem;color:var(--accent-cyan)}
+.invoice-line .amount{font-family:'Space Mono',monospace;font-weight:700}
+.entry-select,.entry-input{background:var(--bg-primary);border:2px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-family:'Outfit',sans-serif;font-size:0.85rem;width:100%;min-width:80px;transition:border-color 0.3s}
+.entry-select:focus,.entry-input:focus{outline:none;border-color:var(--accent-blue)}
+.entry-select{cursor:pointer;appearance:none}
+.entry-input{text-align:right}
+.entry-input.correct-input,.entry-select.correct-input{border-color:var(--accent-green);background:rgba(16,185,129,0.05)}
+.entry-input.incorrect-input,.entry-select.incorrect-input{border-color:var(--accent-red);background:rgba(239,68,68,0.05)}
+.btn{padding:12px 28px;border-radius:12px;border:none;font-family:'Outfit',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:all 0.3s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(59,130,246,0.4)}
+.btn-success{background:linear-gradient(135deg,var(--accent-green),#059669);color:white}
+.btn-success:hover{transform:translateY(-2px)}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text-primary)}
+.btn-outline:hover{border-color:var(--accent-blue);background:rgba(59,130,246,0.05)}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important}
+.btn-group{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;justify-content:center}
+.result-banner{padding:16px 20px;border-radius:12px;margin:16px 0;font-weight:600;display:flex;align-items:center;gap:12px;animation:fadeIn 0.4s ease}
+.result-banner.success{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green)}
+.result-banner.error{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--accent-red)}
+.result-banner.info{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:var(--accent-blue)}
+.tag{display:inline-block;padding:2px 10px;border-radius:6px;font-size:0.8rem;font-weight:700}
+.tag-charge{background:rgba(249,115,22,0.15);color:var(--charge-color);border:1px solid rgba(249,115,22,0.3)}
+.tag-produit{background:rgba(34,211,238,0.15);color:var(--produit-color);border:1px solid rgba(34,211,238,0.3)}
+.tag-debit{background:rgba(245,158,11,0.15);color:var(--debit-color);border:1px solid rgba(245,158,11,0.3)}
+.tag-credit{background:rgba(167,139,250,0.15);color:var(--credit-color);border:1px solid rgba(167,139,250,0.3)}
+.tag-bilan{background:rgba(59,130,246,0.15);color:var(--accent-blue);border:1px solid rgba(59,130,246,0.3)}
+.tag-gestion{background:rgba(236,72,153,0.15);color:var(--accent-pink);border:1px solid rgba(236,72,153,0.3)}
+.landing{text-align:center;padding:40px 20px}
+.landing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:30px 0}
+.level-card{background:var(--bg-card);border:2px solid var(--border);border-radius:16px;padding:24px;text-align:left;transition:all 0.3s;cursor:default;position:relative;overflow:hidden}
+.level-card::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
+.level-card:nth-child(1)::after{background:var(--accent-blue)}.level-card:nth-child(2)::after{background:var(--accent-cyan)}.level-card:nth-child(3)::after{background:var(--accent-orange)}.level-card:nth-child(4)::after{background:var(--accent-purple)}.level-card:nth-child(5)::after{background:var(--accent-green)}.level-card:nth-child(6)::after{background:var(--accent-pink)}.level-card:nth-child(7)::after{background:var(--accent-red)}
+.level-card .level-num{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.level-card .level-name{font-size:1.1rem;font-weight:700;margin-bottom:4px}
+.level-card .level-desc{font-size:0.82rem;color:var(--text-secondary);line-height:1.5}
+.level-card .level-icon{font-size:2rem;position:absolute;top:16px;right:16px;opacity:0.3}
+.scenario-box{background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(236,72,153,0.05));border:1px solid rgba(139,92,246,0.2);border-radius:14px;padding:18px 22px;margin:16px 0;display:flex;gap:14px;align-items:flex-start}
+.scenario-box .scenario-icon{font-size:1.5rem;flex-shrink:0}
+.scenario-box .scenario-text{font-size:0.9rem;line-height:1.6;color:var(--text-secondary)}
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000}
+.confetti-piece{position:absolute;width:10px;height:10px;top:-20px;animation:confetti-fall 3s ease-in forwards}
+@keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+.final-screen{text-align:center;padding:40px 20px}
+.trophy{font-size:5rem;animation:bounce 1s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+.final-score{font-family:'Space Mono',monospace;font-size:4rem;font-weight:700;margin:20px 0}
+.grade{font-size:1.2rem;font-weight:600;margin-bottom:10px}
+.grade-bar{display:flex;gap:4px;justify-content:center;margin:20px 0}
+.grade-segment{width:30px;height:8px;border-radius:4px;background:var(--border);transition:background 0.5s}
+.grade-segment.filled{background:var(--accent-green)}
+.hidden{display:none!important}
+html{scroll-behavior:smooth}
+@media(max-width:768px){.exercise-card{padding:20px 16px}.quiz-item{flex-direction:column;align-items:stretch}.quiz-item .options{justify-content:center}.schema-container{flex-direction:column;align-items:center}.schema-arrow{transform:rotate(90deg)}.invoice-header{flex-direction:column;gap:8px}.invoice-header .details{text-align:left}}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div class="app-container" id="app"></div>
+<script>
+
+const EXERCISES = [
+  { id:'ex1', num:'Exercice 01', title:'Les classes comptables', icon:'🏛️', desc:'Rappel des 7 classes du PCMN et distinction bilan/gestion' },
+  { id:'ex2', num:'Exercice 02', title:'Charge ou Produit ?', icon:'⚖️', desc:'Identifier si une opération génère une charge ou un produit' },
+  { id:'ex3', num:'Exercice 03', title:'Le bon numéro de compte', icon:'🔢', desc:'Trouver le numéro et nom de compte PCMN correspondant' },
+  { id:'ex4', num:'Exercice 04', title:'Débit ou Crédit ?', icon:'↔️', desc:'Maîtriser le sens de fonctionnement des comptes de gestion' },
+  { id:'ex5', num:'Exercice 05', title:'Comptabilise la facture', icon:'📄', desc:'Enregistrer une facture complète dans les comptes en T' },
+  { id:'ex6', num:'Exercice 06', title:'Bilan ou Gestion ?', icon:'🎯', desc:'Distinguer comptes de bilan et comptes de gestion' },
+  { id:'ex7', num:'Exercice 07', title:'Le Grand Défi', icon:'🏆', desc:'Synthèse complète : comptabiliser plusieurs opérations' }
+];
+
+let state = { currentExercise: -1, scores: [0,0,0,0,0,0,0], maxScores: [0,0,0,0,0,0,0], completed: [false,false,false,false,false,false,false] };
+const app = document.getElementById('app');
+
+function createParticles() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.animationDuration = (8+Math.random()*12)+'s';
+    p.style.animationDelay = Math.random()*10+'s';
+    p.style.width = p.style.height = (2+Math.random()*3)+'px';
+    c.appendChild(p);
+  }
+}
+
+function renderApp() {
+  if (state.currentExercise === -1) renderLanding();
+  else if (state.currentExercise === 99) renderFinalScreen();
+  else renderExercise(state.currentExercise);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderHeader() {
+  return `<div class="header"><div class="header-badge">4e Technique — Comptabilité</div><h1>ComptaGestion</h1><p>Maîtrise les comptes de charges et de produits</p></div>`;
+}
+
+function renderProgress() {
+  const total = state.completed.filter(Boolean).length;
+  const pct = (total / 7) * 100;
+  const score = state.scores.reduce((a,b) => a+b, 0);
+  const maxScore = state.maxScores.reduce((a,b) => a+b, 0);
+  return `<div class="progress-container"><div class="progress-header"><span>Progression : ${total}/7 exercices</span><span class="progress-score">${maxScore > 0 ? Math.round(score/maxScore*100) : 0}% de réussite</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-steps">${EXERCISES.map((ex, i) => `<div class="step-dot ${state.completed[i] ? 'completed' : state.currentExercise === i ? 'active' : ''}" onclick="goToExercise(${i})" title="${ex.title}"></div>`).join('')}</div></div>`;
+}
+
+function renderLanding() {
+  app.innerHTML = `${renderHeader()}${renderProgress()}<div class="landing"><div class="exercise-card" style="text-align:left"><div class="theory-box" style="margin-bottom:0"><h3>📚 À propos de ce module</h3><p>Bienvenue dans <strong>ComptaGestion</strong> ! Tu vas découvrir les <strong>comptes de gestion</strong> (classes 6 et 7 du PCMN) à travers 7 exercices progressifs basés sur des situations réalistes d'entreprises belges.</p><p style="margin-top:10px">Jusqu'ici, tu n'as utilisé que des comptes de <strong>bilan</strong> (classes 1 à 5) pour des opérations <em>improductives</em>. Maintenant, tu vas apprendre à comptabiliser des opérations <em>productives</em> : les <span class="tag tag-charge">CHARGES</span> et les <span class="tag tag-produit">PRODUITS</span> qui déterminent le résultat de l'entreprise.</p></div></div><div class="landing-grid">${EXERCISES.map((ex, i) => `<div class="level-card"><div class="level-icon">${ex.icon}</div><div class="level-num">${ex.num}</div><div class="level-name">${ex.title}</div><div class="level-desc">${ex.desc}</div>${state.completed[i] ? '<div style="margin-top:8px"><span class="tag" style="background:rgba(16,185,129,0.15);color:var(--accent-green);border:1px solid rgba(16,185,129,0.3)">✓ Terminé</span></div>' : ''}</div>`).join('')}</div><div class="btn-group"><button class="btn btn-primary" onclick="startExercises()" style="font-size:1.1rem;padding:16px 40px;">🚀 Commencer l'aventure</button></div></div>`;
+}
+
+function startExercises() { state.currentExercise = 0; renderApp(); }
+function goToExercise(i) { state.currentExercise = i; renderApp(); }
+function nextExercise() { state.currentExercise < 6 ? state.currentExercise++ : state.currentExercise = 99; renderApp(); }
+function backToMenu() { state.currentExercise = -1; renderApp(); }
+
+function renderExercise(idx) {
+  const renderers = [renderEx1, renderEx2, renderEx3, renderEx4, renderEx5, renderEx6, renderEx7];
+  app.innerHTML = `${renderHeader()}${renderProgress()}<div class="exercise-container">${renderers[idx]()}</div>`;
+  const postInits = { 0: initEx1, 1: initEx2, 2: initEx3, 3: initEx4, 5: initEx6 };
+  if (postInits[idx]) postInits[idx]();
+}
+
+// ============= EX1: Classes comptables =============
+const EX1_DATA = [
+  { compte: 'Capital souscrit (1000)', classe: '1', type: 'Bilan — Passif' },
+  { compte: 'Constructions (2220)', classe: '2', type: 'Bilan — Actif' },
+  { compte: 'Marchandises (3400)', classe: '3', type: 'Bilan — Actif (stock)' },
+  { compte: 'Clients (4000)', classe: '4', type: 'Bilan — Actif (créance)' },
+  { compte: 'Banque (5500)', classe: '5', type: 'Bilan — Actif' },
+  { compte: 'Achats de marchandises (6040)', classe: '6', type: 'Gestion — Charge' },
+  { compte: 'Ventes de marchandises (7000)', classe: '7', type: 'Gestion — Produit' },
+  { compte: 'Fournisseurs (4400)', classe: '4', type: 'Bilan — Passif (dette)' },
+  { compte: 'Caisse (5700)', classe: '5', type: 'Bilan — Actif' },
+  { compte: 'Loyers & charges locatives (6100)', classe: '6', type: 'Gestion — Charge' },
+  { compte: 'Intérêts reçus (7500)', classe: '7', type: 'Gestion — Produit' },
+  { compte: 'Matériel roulant (2410)', classe: '2', type: 'Bilan — Actif' },
+];
+
+function renderEx1() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 01 / 07</div><div class="exercise-title">🏛️ Les classes comptables</div><div class="exercise-subtitle">Rappel fondamental : les 7 classes du PCMN belge et la distinction entre comptes de bilan et comptes de gestion.</div><div class="theory-box"><h3>💡 Rappel théorique</h3><p>Le Plan Comptable Minimum Normalisé (PCMN) est organisé en <strong>7 classes</strong> :</p><div class="schema-container" style="margin:16px 0"><div class="schema-block bilan" style="animation-delay:0.1s"><div class="icon">📊</div><div class="label">Classes 1 à 5</div><div class="value">BILAN</div></div><div class="schema-arrow">→</div><div class="schema-block" style="animation-delay:0.2s;border-color:var(--text-muted)"><div class="icon">🔄</div><div class="label">Opérations</div><div class="value" style="color:var(--text-secondary)">Improductives</div></div></div><div class="schema-container" style="margin:16px 0"><div class="schema-block charge" style="animation-delay:0.3s"><div class="icon">📉</div><div class="label">Classe 6</div><div class="value">CHARGES</div></div><div class="schema-block produit" style="animation-delay:0.4s"><div class="icon">📈</div><div class="label">Classe 7</div><div class="value">PRODUITS</div></div><div class="schema-arrow">→</div><div class="schema-block" style="animation-delay:0.5s;border-color:var(--accent-green)"><div class="icon">🎯</div><div class="label">Opérations</div><div class="value" style="color:var(--accent-green)">Productives</div></div></div><p style="margin-top:12px"><strong>Important :</strong> Les classes 6 (charges) et 7 (produits) sont les comptes de <em>gestion</em>. Ils déterminent le <strong>résultat</strong> (bénéfice ou perte).</p></div><p style="margin-bottom:16px;font-weight:600;color:var(--accent-cyan)">Pour chaque compte, indique sa classe (1 à 7) :</p><div class="quiz-grid" id="ex1-grid"></div><div id="ex1-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex1-check" onclick="checkEx1()">Vérifier mes réponses</button><button class="btn btn-success hidden" id="ex1-next" onclick="nextExercise()">Exercice suivant →</button></div></div>`;
+}
+
+function initEx1() {
+  document.getElementById('ex1-grid').innerHTML = EX1_DATA.map((item, i) => `<div class="quiz-item" id="ex1-item-${i}"><div style="flex:1"><div class="question-text">${item.compte}</div><div class="feedback" id="ex1-fb-${i}"></div></div><div class="options">${[1,2,3,4,5,6,7].map(c => `<button class="option-btn" style="padding:6px 12px;min-width:36px;font-size:0.8rem" onclick="selectEx1(${i},'${c}',this)" id="ex1-btn-${i}-${c}">${c}</button>`).join('')}</div></div>`).join('');
+}
+let ex1Answers = {};
+function selectEx1(idx, val, btn) { document.querySelectorAll(`[id^="ex1-btn-${idx}-"]`).forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); ex1Answers[idx] = val; }
+function checkEx1() {
+  let score = 0; const max = EX1_DATA.length;
+  EX1_DATA.forEach((item, i) => { const a = ex1Answers[i], fb = document.getElementById(`ex1-fb-${i}`), row = document.getElementById(`ex1-item-${i}`); if (a === item.classe) { score++; row.classList.add('answered-correct'); document.getElementById(`ex1-btn-${i}-${a}`)?.classList.add('correct'); fb.className = 'feedback show correct-fb'; fb.textContent = `✓ Correct ! Classe ${item.classe} — ${item.type}`; } else { row.classList.add('answered-incorrect'); if (a) document.getElementById(`ex1-btn-${i}-${a}`)?.classList.add('incorrect'); document.getElementById(`ex1-btn-${i}-${item.classe}`)?.classList.add('correct'); fb.className = 'feedback show incorrect-fb'; fb.textContent = `✗ Réponse : classe ${item.classe} (${item.type})`; } });
+  state.scores[0]=score; state.maxScores[0]=max; state.completed[0]=true;
+  document.getElementById('ex1-result').innerHTML = `<div class="result-banner ${score>=max*0.7?'success':'info'}"><span style="font-size:1.5rem">${score>=max*0.7?'🎉':'📚'}</span><span>${score}/${max} — ${score>=max*0.7?'Excellent !':'Revois le tableau des 7 classes.'}</span></div>`;
+  document.getElementById('ex1-check').classList.add('hidden'); document.getElementById('ex1-next').classList.remove('hidden');
+  document.querySelectorAll('[id^="ex1-btn-"]').forEach(b => { b.disabled = true; b.style.cursor = 'default'; });
+}
+
+// ============= EX2: Charge ou Produit (FIXED VISIBILITY) =============
+const EX2_DATA = [
+  { op: "Achat de smartphones chez Coolblue pour revente", answer: "C", explanation: "6040 Achats de marchandises → Achat destiné à la revente = charge" },
+  { op: "Vente de tablettes à un client", answer: "P", explanation: "7000 Ventes de marchandises → Revenu de vente = produit" },
+  { op: "Facture d'électricité de TotalEnergies", answer: "C", explanation: "6120 Fournitures (énergie) → Service reçu = charge" },
+  { op: "Loyer mensuel du magasin payé au propriétaire", answer: "C", explanation: "6100 Loyers & charges locatives → Coût récurrent = charge" },
+  { op: "Intérêts reçus sur le compte épargne Belfius", answer: "P", explanation: "7500 Intérêts reçus → Revenu financier = produit" },
+  { op: "Frais bancaires Belfius pour tenue de compte", answer: "C", explanation: "6570 Frais bancaires → Coût de service bancaire = charge" },
+  { op: "Facture Proximus pour l'abonnement internet", answer: "C", explanation: "6120 Fournitures → Service de télécommunication = charge" },
+  { op: "Loyer encaissé pour sous-location d'un espace", answer: "P", explanation: "7430 Produits de location → Revenu locatif = produit" },
+  { op: "Publicité sur Instagram pour le magasin", answer: "C", explanation: "6150 Publicité & annonces → Dépense marketing = charge" },
+  { op: "Différence de caisse positive constatée", answer: "P", explanation: "7600 Produits exceptionnels → Gain exceptionnel = produit" },
+  { op: "Honoraires du comptable externe", answer: "C", explanation: "6130 Rétributions de tiers → Service professionnel = charge" },
+  { op: "Taxe communale sur le magasin", answer: "C", explanation: "6400 Charges fiscales d'exploitation → Taxe = charge" },
+  { op: "Intérêts payés sur un emprunt bancaire", answer: "C", explanation: "6500 Intérêts sur emprunts → Coût financier = charge" },
+  { op: "Réparation de la camionnette chez le garagiste", answer: "C", explanation: "6110 Entretien & réparations → Frais d'entretien = charge" },
+  { op: "Perte suite à un vol de 50 € en caisse", answer: "C", explanation: "6600 Charges exceptionnelles → Perte exceptionnelle = charge" },
+];
+
+function renderEx2() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 02 / 07</div><div class="exercise-title">⚖️ Charge ou Produit ?</div><div class="exercise-subtitle">Identifie si chaque opération représente une charge (classe 6) ou un produit (classe 7).</div><div class="theory-box"><h3>💡 Rappel</h3><p>Une <span class="tag tag-charge">CHARGE</span> (classe 6) = une <strong>dépense</strong>, un coût. Elle <em>diminue</em> le résultat.</p><p>Un <span class="tag tag-produit">PRODUIT</span> (classe 7) = une <strong>recette</strong>, un revenu. Il <em>augmente</em> le résultat.</p><div style="display:flex;justify-content:center;gap:20px;margin-top:16px;flex-wrap:wrap"><div class="t-account" style="flex:1;max-width:220px"><div class="t-account-header" style="background:rgba(249,115,22,0.1);color:var(--charge-color)">Compte de CHARGE (6x)</div><div class="t-account-body"><div class="t-account-debit"><div class="t-account-label">Débit</div><strong>+ Augmente</strong></div><div class="t-account-credit"><div class="t-account-label">Crédit</div>- Diminue</div></div></div><div class="t-account" style="flex:1;max-width:220px"><div class="t-account-header" style="background:rgba(34,211,238,0.1);color:var(--produit-color)">Compte de PRODUIT (7x)</div><div class="t-account-body"><div class="t-account-debit"><div class="t-account-label">Débit</div>- Diminue</div><div class="t-account-credit"><div class="t-account-label">Crédit</div><strong>+ Augmente</strong></div></div></div></div></div><div class="scenario-box"><div class="scenario-icon">🏪</div><div class="scenario-text">Tu es comptable de la <strong>SRL TechStore Frameries</strong>. Classe chaque opération :</div></div><div class="quiz-grid" id="ex2-grid"></div><div id="ex2-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex2-check" onclick="checkEx2()">Vérifier mes réponses</button><button class="btn btn-success hidden" id="ex2-next" onclick="nextExercise()">Exercice suivant →</button></div></div>`;
+}
+
+function initEx2() {
+  document.getElementById('ex2-grid').innerHTML = EX2_DATA.map((item, i) => `<div class="quiz-item" id="ex2-item-${i}"><div style="flex:1"><div class="question-text">${item.op}</div><div class="feedback" id="ex2-fb-${i}"></div></div><div class="options"><button class="option-btn charge-btn" onclick="selectEx2(${i},'C',this)" id="ex2-btn-${i}-C" style="border-color:rgba(249,115,22,0.3);color:var(--charge-color)">📉 Charge</button><button class="option-btn produit-btn" onclick="selectEx2(${i},'P',this)" id="ex2-btn-${i}-P" style="border-color:rgba(34,211,238,0.3);color:var(--produit-color)">📈 Produit</button></div></div>`).join('');
+}
+let ex2Answers = {};
+function selectEx2(idx, val, btn) { document.querySelectorAll(`[id^="ex2-btn-${idx}-"]`).forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); ex2Answers[idx] = val; }
+function checkEx2() {
+  let score = 0; const max = EX2_DATA.length;
+  EX2_DATA.forEach((item, i) => { const a=ex2Answers[i],fb=document.getElementById(`ex2-fb-${i}`),row=document.getElementById(`ex2-item-${i}`); if(a===item.answer){score++;row.classList.add('answered-correct');document.getElementById(`ex2-btn-${i}-${a}`)?.classList.add('correct');fb.className='feedback show correct-fb';fb.textContent=`✓ ${item.explanation}`;}else{row.classList.add('answered-incorrect');if(a)document.getElementById(`ex2-btn-${i}-${a}`)?.classList.add('incorrect');document.getElementById(`ex2-btn-${i}-${item.answer}`)?.classList.add('correct');fb.className='feedback show incorrect-fb';fb.textContent=`✗ ${item.explanation}`;} });
+  state.scores[1]=score;state.maxScores[1]=max;state.completed[1]=true;
+  document.getElementById('ex2-result').innerHTML=`<div class="result-banner ${score>=max*0.7?'success':'info'}"><span style="font-size:1.5rem">${score>=max*0.7?'🎉':'📚'}</span><span>${score}/${max} — ${score>=max*0.7?'Tu distingues bien charges et produits !':'Retiens : classe 6 = charges, classe 7 = produits'}</span></div>`;
+  document.getElementById('ex2-check').classList.add('hidden');document.getElementById('ex2-next').classList.remove('hidden');document.querySelectorAll('[id^="ex2-btn-"]').forEach(b=>b.disabled=true);
+}
+
+// ============= EX3: Le bon numéro de compte (NEW PCMN) =============
+const EX3_DATA = [
+  { op: "Achat de tablettes destinées à la revente", answer: "6040", label: "6040 — Achats de marchandises" },
+  { op: "Facture d'électricité reçue de TotalEnergies", answer: "6120", label: "6120 — Fournitures (énergie, eau…)" },
+  { op: "Vente de PC portables à un client", answer: "7000", label: "7000 — Ventes de marchandises" },
+  { op: "Loyer mensuel du local commercial", answer: "6100", label: "6100 — Loyers & charges locatives" },
+  { op: "Prime d'assurance incendie annuelle", answer: "6160", label: "6160 — Assurances" },
+  { op: "Facture Proximus (internet et téléphone)", answer: "6120", label: "6120 — Fournitures (énergie, eau, télécom…)" },
+  { op: "Intérêts payés à la banque sur un emprunt", answer: "6500", label: "6500 — Intérêts sur emprunts" },
+  { op: "Campagne publicitaire sur Facebook/Instagram", answer: "6150", label: "6150 — Publicité & annonces" },
+  { op: "Réparation du véhicule utilitaire", answer: "6110", label: "6110 — Entretien & réparations" },
+  { op: "Intérêts reçus sur le compte à terme Belfius", answer: "7500", label: "7500 — Intérêts reçus" },
+  { op: "Facture d'honoraires du comptable externe", answer: "6130", label: "6130 — Rétributions de tiers" },
+  { op: "Constatation d'un vol en caisse (perte)", answer: "6600", label: "6600 — Charges exceptionnelles" },
+  { op: "Loyer encaissé pour un bureau sous-loué", answer: "7430", label: "7430 — Produits de location" },
+  { op: "Précompte immobilier (taxe annuelle)", answer: "6400", label: "6400 — Charges fiscales d'exploitation" },
+  { op: "Frais de livraison payés au transporteur", answer: "6140", label: "6140 — Frais de transport & déplacements" },
+];
+const EX3_OPTIONS = ["6040 — Achats de marchandises","6100 — Loyers & charges locatives","6110 — Entretien & réparations","6120 — Fournitures (énergie, eau…)","6130 — Rétributions de tiers","6140 — Frais de transport & dépl.","6150 — Publicité & annonces","6160 — Assurances","6400 — Charges fiscales d'expl.","6500 — Intérêts sur emprunts","6570 — Frais bancaires","6600 — Charges exceptionnelles","7000 — Ventes de marchandises","7010 — Ventes de produits finis","7070 — Ventes de prestations","7400 — Subsides d'exploitation","7430 — Produits de location","7500 — Intérêts reçus","7600 — Produits exceptionnels","7630 — Plus-values sur réalisation"];
+
+function renderEx3() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 03 / 07</div><div class="exercise-title">🔢 Le bon numéro de compte</div><div class="exercise-subtitle">Pour chaque opération, sélectionne le numéro et nom de compte PCMN correct.</div><div class="theory-box"><h3>💡 Plan comptable simplifié — Comptes de gestion</h3><div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:240px"><div style="font-weight:700;color:var(--charge-color);margin-bottom:8px">📉 CHARGES (Classe 6)</div><ul><li><strong>6040</strong> — Achats de marchandises</li><li><strong>6100</strong> — Loyers & charges locatives</li><li><strong>6110</strong> — Entretien & réparations</li><li><strong>6120</strong> — Fournitures (énergie, eau, télécom…)</li><li><strong>6130</strong> — Rétributions de tiers (comptable…)</li><li><strong>6140</strong> — Frais de transport & déplacements</li><li><strong>6150</strong> — Publicité & annonces</li><li><strong>6160</strong> — Assurances</li><li><strong>6400</strong> — Charges fiscales d'exploitation</li><li><strong>6500</strong> — Intérêts sur emprunts</li><li><strong>6570</strong> — Frais bancaires</li><li><strong>6600</strong> — Charges exceptionnelles</li></ul></div><div style="flex:1;min-width:240px"><div style="font-weight:700;color:var(--produit-color);margin-bottom:8px">📈 PRODUITS (Classe 7)</div><ul><li><strong>7000</strong> — Ventes de marchandises</li><li><strong>7010</strong> — Ventes de produits finis</li><li><strong>7070</strong> — Ventes de prestations de services</li><li><strong>7400</strong> — Subsides d'exploitation</li><li><strong>7430</strong> — Produits de location</li><li><strong>7500</strong> — Intérêts reçus</li><li><strong>7600</strong> — Produits exceptionnels</li><li><strong>7630</strong> — Plus-values sur réalisation</li></ul></div></div></div><div class="scenario-box"><div class="scenario-icon">🏪</div><div class="scenario-text">Tu es comptable de la <strong>SRL TechStore Frameries</strong>. Trouve le bon compte :</div></div><div class="quiz-grid" id="ex3-grid"></div><div id="ex3-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex3-check" onclick="checkEx3()">Vérifier mes réponses</button><button class="btn btn-success hidden" id="ex3-next" onclick="nextExercise()">Exercice suivant →</button></div></div>`;
+}
+function initEx3() {
+  document.getElementById('ex3-grid').innerHTML = EX3_DATA.map((item, i) => `<div class="quiz-item" id="ex3-item-${i}" style="flex-direction:column;align-items:stretch"><div class="question-text" style="margin-bottom:10px">${i+1}. ${item.op}</div><select class="entry-select" id="ex3-sel-${i}" style="max-width:100%"><option value="">— Sélectionne le compte —</option>${EX3_OPTIONS.map(o => `<option value="${o.split(' ')[0]}">${o}</option>`).join('')}</select><div class="feedback" id="ex3-fb-${i}"></div></div>`).join('');
+}
+function checkEx3() {
+  let score=0;const max=EX3_DATA.length;
+  EX3_DATA.forEach((item,i)=>{const sel=document.getElementById(`ex3-sel-${i}`),fb=document.getElementById(`ex3-fb-${i}`),row=document.getElementById(`ex3-item-${i}`);if(sel.value===item.answer){score++;row.classList.add('answered-correct');sel.classList.add('correct-input');fb.className='feedback show correct-fb';fb.textContent=`✓ Correct : ${item.label}`;}else{row.classList.add('answered-incorrect');sel.classList.add('incorrect-input');fb.className='feedback show incorrect-fb';fb.textContent=`✗ Réponse : ${item.label}`;}sel.disabled=true;});
+  state.scores[2]=score;state.maxScores[2]=max;state.completed[2]=true;
+  document.getElementById('ex3-result').innerHTML=`<div class="result-banner ${score>=max*0.7?'success':'info'}"><span style="font-size:1.5rem">${score>=max*0.7?'🎉':'💪'}</span><span>${score}/${max} — ${score>=max*0.7?'Bravo, tu connais bien les numéros !':'Consulte le PCMN pour mémoriser les numéros !'}</span></div>`;
+  document.getElementById('ex3-check').classList.add('hidden');document.getElementById('ex3-next').classList.remove('hidden');
+}
+
+// ============= EX4: Débit ou Crédit (FIXED VISIBILITY) =============
+const EX4_DATA = [
+  { op: "6040 Achats de marchandises (lors d'un achat)", answer: "D", exp: "Charge → augmente au Débit" },
+  { op: "4400 Fournisseurs (lors d'un achat à crédit)", answer: "C", exp: "Passif → augmente au Crédit (dette)" },
+  { op: "7000 Ventes de marchandises (lors d'une vente)", answer: "C", exp: "Produit → augmente au Crédit" },
+  { op: "4000 Clients (lors d'une vente à crédit)", answer: "D", exp: "Actif → augmente au Débit (créance)" },
+  { op: "6120 Fournitures (facture d'énergie reçue)", answer: "D", exp: "Charge → augmente au Débit" },
+  { op: "4110 TVA à récupérer (sur facture reçue)", answer: "D", exp: "Actif → augmente au Débit (TVA récup.)" },
+  { op: "4510 TVA à payer (sur facture envoyée)", answer: "C", exp: "Passif → augmente au Crédit (TVA à reverser)" },
+  { op: "6100 Loyers (paiement du loyer mensuel)", answer: "D", exp: "Charge → augmente au Débit" },
+  { op: "5500 Banque (lors d'un paiement par virement)", answer: "C", exp: "Actif → diminue au Crédit (l'argent sort)" },
+  { op: "7500 Intérêts reçus (revenus financiers)", answer: "C", exp: "Produit → augmente au Crédit" },
+  { op: "5700 Caisse (lors d'un encaissement client)", answer: "D", exp: "Actif → augmente au Débit (l'argent entre)" },
+  { op: "6570 Frais bancaires (commission prélevée)", answer: "D", exp: "Charge → augmente au Débit" },
+];
+
+function renderEx4() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 04 / 07</div><div class="exercise-title">↔️ Débit ou Crédit ?</div><div class="exercise-subtitle">Pour chaque compte, indique s'il est débité ou crédité.</div><div class="theory-box"><h3>💡 Règle fondamentale</h3><div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px"><div style="flex:1;min-width:200px;padding:14px;background:rgba(249,115,22,0.08);border-radius:10px;border:1px solid rgba(249,115,22,0.2)"><div style="font-weight:700;color:var(--charge-color);margin-bottom:6px">📉 CHARGES (classe 6)</div><div style="font-size:0.88rem;color:var(--text-secondary)">Augmentent au <span class="tag tag-debit">DÉBIT</span></div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">(comme les comptes d'actif)</div></div><div style="flex:1;min-width:200px;padding:14px;background:rgba(34,211,238,0.08);border-radius:10px;border:1px solid rgba(34,211,238,0.2)"><div style="font-weight:700;color:var(--produit-color);margin-bottom:6px">📈 PRODUITS (classe 7)</div><div style="font-size:0.88rem;color:var(--text-secondary)">Augmentent au <span class="tag tag-credit">CRÉDIT</span></div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">(comme les comptes de passif)</div></div></div><p style="margin-top:14px;font-size:0.88rem"><strong>Astuce :</strong> Total débits = Total crédits (toujours !)</p></div><div class="quiz-grid" id="ex4-grid"></div><div id="ex4-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex4-check" onclick="checkEx4()">Vérifier mes réponses</button><button class="btn btn-success hidden" id="ex4-next" onclick="nextExercise()">Exercice suivant →</button></div></div>`;
+}
+function initEx4() {
+  document.getElementById('ex4-grid').innerHTML = EX4_DATA.map((item, i) => `<div class="quiz-item" id="ex4-item-${i}"><div style="flex:1"><div class="question-text">${item.op}</div><div class="feedback" id="ex4-fb-${i}"></div></div><div class="options"><button class="option-btn debit-btn" onclick="selectEx4(${i},'D',this)" id="ex4-btn-${i}-D" style="border-color:rgba(245,158,11,0.3);color:var(--debit-color)">← Débit</button><button class="option-btn credit-btn" onclick="selectEx4(${i},'C',this)" id="ex4-btn-${i}-C" style="border-color:rgba(167,139,250,0.3);color:var(--credit-color)">Crédit →</button></div></div>`).join('');
+}
+let ex4Answers = {};
+function selectEx4(idx,val,btn){document.querySelectorAll(`[id^="ex4-btn-${idx}-"]`).forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');ex4Answers[idx]=val;}
+function checkEx4() {
+  let score=0;const max=EX4_DATA.length;
+  EX4_DATA.forEach((item,i)=>{const a=ex4Answers[i],fb=document.getElementById(`ex4-fb-${i}`),row=document.getElementById(`ex4-item-${i}`);if(a===item.answer){score++;row.classList.add('answered-correct');document.getElementById(`ex4-btn-${i}-${a}`)?.classList.add('correct');fb.className='feedback show correct-fb';fb.textContent=`✓ ${item.exp}`;}else{row.classList.add('answered-incorrect');if(a)document.getElementById(`ex4-btn-${i}-${a}`)?.classList.add('incorrect');document.getElementById(`ex4-btn-${i}-${item.answer}`)?.classList.add('correct');fb.className='feedback show incorrect-fb';fb.textContent=`✗ ${item.exp}`;}});
+  state.scores[3]=score;state.maxScores[3]=max;state.completed[3]=true;
+  document.getElementById('ex4-result').innerHTML=`<div class="result-banner ${score>=max*0.7?'success':'info'}"><span style="font-size:1.5rem">${score>=max*0.7?'🎉':'💪'}</span><span>${score}/${max} — ${score>=max*0.7?'Tu maîtrises le sens des comptes !':'Charges au Débit, Produits au Crédit !'}</span></div>`;
+  document.getElementById('ex4-check').classList.add('hidden');document.getElementById('ex4-next').classList.remove('hidden');document.querySelectorAll('[id^="ex4-btn-"]').forEach(b=>b.disabled=true);
+}
+
+// ============= EX5: Comptabilise la facture (NEW PCMN) =============
+const ACCT_OPTS = '<option value="">— Sélectionne —</option><option value="6040">6040 — Achats de marchandises</option><option value="6120">6120 — Fournitures (énergie…)</option><option value="7000">7000 — Ventes de marchandises</option><option value="4110">4110 — TVA à récupérer</option><option value="4510">4510 — TVA à payer</option><option value="4000">4000 — Clients</option><option value="4400">4400 — Fournisseurs</option>';
+function entryLine(pfx,n){return `<div class="quiz-item" style="flex-direction:column;align-items:stretch;margin-bottom:10px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><label style="font-weight:600;min-width:100px">Compte :</label><select class="entry-select" data-q="${pfx}c${n}" style="flex:1;min-width:200px">${ACCT_OPTS}</select><select class="entry-select" data-q="${pfx}s${n}" style="width:110px"><option value="">— Sens —</option><option value="D">Débit</option><option value="C">Crédit</option></select><input class="entry-input" data-q="${pfx}m${n}" placeholder="Montant" style="width:120px"></div></div>`;}
+
+function renderEx5() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 05 / 07</div><div class="exercise-title">📄 Comptabilise la facture</div><div class="exercise-subtitle">Enregistre chaque facture : bon compte, sens (D/C) et montant.</div><div class="scenario-box"><div class="scenario-icon">🏬</div><div class="scenario-text">Tu es comptable de la <strong>SRL BioMarché Frameries</strong>. Comptabilise les 3 factures :</div></div>
+  <h3 style="margin:20px 0 8px;color:var(--accent-cyan)">Opération 1 — Facture d'achat</h3>
+  <div class="invoice"><div class="invoice-header"><div><div class="company">Colruyt Group → SRL BioMarché</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:2px">Achat de produits bio pour revente</div></div><div class="details"><div>Fact. n°2025-156</div><div>10 mars 2025</div></div></div><div class="invoice-line"><span>Marchandises HTVA</span><span class="amount">1 250,00 €</span></div><div class="invoice-line"><span>TVA 6 %</span><span class="amount">75,00 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">1 325,00 €</span></div></div>
+  ${entryLine('f1',1)}${entryLine('f1',2)}${entryLine('f1',3)}
+  <h3 style="margin:28px 0 8px;color:var(--accent-cyan)">Opération 2 — Facture de service</h3>
+  <div class="invoice"><div class="invoice-header"><div><div class="company">TotalEnergies → SRL BioMarché</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:2px">Consommation d'électricité</div></div><div class="details"><div>Fact. n°BE2025-987456</div><div>15 mars 2025</div></div></div><div class="invoice-line"><span>Électricité HTVA</span><span class="amount">185,00 €</span></div><div class="invoice-line"><span>TVA 21 %</span><span class="amount">38,85 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">223,85 €</span></div></div>
+  ${entryLine('f2',1)}${entryLine('f2',2)}${entryLine('f2',3)}
+  <h3 style="margin:28px 0 8px;color:var(--accent-cyan)">Opération 3 — Facture de vente</h3>
+  <div class="invoice"><div class="invoice-header"><div><div class="company">SRL BioMarché → Sophie Lecomte</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:2px">Vente de produits biologiques</div></div><div class="details"><div>Fact. n°BM-2025-078</div><div>20 mars 2025</div></div></div><div class="invoice-line"><span>Produits bio HTVA</span><span class="amount">89,00 €</span></div><div class="invoice-line"><span>TVA 6 %</span><span class="amount">5,34 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">94,34 €</span></div></div>
+  ${entryLine('f3',1)}${entryLine('f3',2)}${entryLine('f3',3)}
+  <div id="ex5-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex5-check" onclick="checkEx5()">Vérifier mes réponses</button><button class="btn btn-success hidden" id="ex5-next" onclick="nextExercise()">Exercice suivant →</button></div></div>`;
+}
+const EX5_EXP = { f1:[{c:'6040',s:'D',m:'1250'},{c:'4110',s:'D',m:'75'},{c:'4400',s:'C',m:'1325'}], f2:[{c:'6120',s:'D',m:'185'},{c:'4110',s:'D',m:'38.85'},{c:'4400',s:'C',m:'223.85'}], f3:[{c:'7000',s:'C',m:'89'},{c:'4510',s:'C',m:'5.34'},{c:'4000',s:'D',m:'94.34'}] };
+function parseAmount(s){if(!s)return null;s=s.replace(/\s/g,'').replace(/€/g,'').replace(',','.').trim();const v=parseFloat(s);return isNaN(v)?null:Math.round(v*100)/100;}
+function checkEx5() {
+  let score=0,max=9;
+  ['f1','f2','f3'].forEach(fk=>{const exp=[...EX5_EXP[fk]];for(let l=1;l<=3;l++){const cs=document.querySelector(`[data-q="${fk}c${l}"]`),ss=document.querySelector(`[data-q="${fk}s${l}"]`),mi=document.querySelector(`[data-q="${fk}m${l}"]`),cv=cs?.value||'',sv=ss?.value||'',mv=parseAmount(mi?.value);const idx=exp.findIndex(e=>{const em=parseFloat(e.m);return e.c===cv&&e.s===sv&&mv!==null&&Math.abs(mv-em)<0.01;});if(idx>=0){score++;cs.classList.add('correct-input');ss.classList.add('correct-input');mi.classList.add('correct-input');exp.splice(idx,1);}else{cs.classList.add('incorrect-input');ss.classList.add('incorrect-input');mi.classList.add('incorrect-input');}cs.disabled=true;ss.disabled=true;mi.disabled=true;}});
+  state.scores[4]=score;state.maxScores[4]=max;state.completed[4]=true;
+  document.getElementById('ex5-result').innerHTML=`<div class="result-banner ${score>=7?'success':score>=4?'info':'error'}"><span style="font-size:1.5rem">${score>=7?'🎉':'📚'}</span><span>${score}/${max} lignes correctes</span></div><div class="theory-box" style="margin-top:16px"><h3>📝 Corrections</h3><p><strong>Fact. 1 (achat) :</strong> 6040 D 1 250,00 | 4110 D 75,00 | 4400 C 1 325,00</p><p><strong>Fact. 2 (énergie) :</strong> 6120 D 185,00 | 4110 D 38,85 | 4400 C 223,85</p><p><strong>Fact. 3 (vente) :</strong> 7000 C 89,00 | 4510 C 5,34 | 4000 D 94,34</p></div>`;
+  document.getElementById('ex5-check').classList.add('hidden');document.getElementById('ex5-next').classList.remove('hidden');
+}
+
+// ============= EX6: Bilan ou Gestion (NEW PCMN) =============
+const EX6_DATA = [
+  { op:"Achat de marchandises à crédit", compte:"6040 Achats march.", bg:"G", dc:"D", exp:"Classe 6 = Gestion, Charge = Débit" },
+  { op:"Paiement d'un fournisseur par banque", compte:"4400 Fournisseurs", bg:"B", dc:"D", exp:"Classe 4 = Bilan, le passif diminue au Débit" },
+  { op:"Vente de marchandises à crédit", compte:"7000 Ventes march.", bg:"G", dc:"C", exp:"Classe 7 = Gestion, Produit = Crédit" },
+  { op:"Encaissement client en caisse", compte:"5700 Caisse", bg:"B", dc:"D", exp:"Classe 5 = Bilan, l'actif augmente au Débit" },
+  { op:"Facture Proximus (télécom)", compte:"6120 Fournitures", bg:"G", dc:"D", exp:"Classe 6 = Gestion, Charge = Débit" },
+  { op:"Intérêts reçus sur placement", compte:"7500 Intérêts reçus", bg:"G", dc:"C", exp:"Classe 7 = Gestion, Produit = Crédit" },
+  { op:"Prélèvement bancaire pour le loyer", compte:"6100 Loyers", bg:"G", dc:"D", exp:"Classe 6 = Gestion, Charge = Débit" },
+  { op:"Retrait banque vers caisse", compte:"5500 Banque", bg:"B", dc:"C", exp:"Classe 5 = Bilan, l'actif diminue au Crédit" },
+  { op:"Précompte immobilier (taxe)", compte:"6400 Ch. fiscales", bg:"G", dc:"D", exp:"Classe 6 = Gestion, Charge = Débit" },
+  { op:"Différence de caisse positive", compte:"7600 Prod. except.", bg:"G", dc:"C", exp:"Classe 7 = Gestion, Produit = Crédit" },
+];
+
+function renderEx6() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 06 / 07</div><div class="exercise-title">🎯 Bilan ou Gestion ?</div><div class="exercise-subtitle">Indique si le compte est Bilan (B) ou Gestion (G), et s'il fonctionne au Débit (D) ou Crédit (C).</div><div class="theory-box"><h3>💡 Synthèse</h3><div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:200px"><div style="font-weight:700;margin-bottom:6px"><span class="tag tag-bilan">BILAN</span> Classes 1 à 5</div><div style="font-size:0.85rem;color:var(--text-secondary)">Patrimoine : ce qu'on possède et ce qu'on doit</div></div><div style="flex:1;min-width:200px"><div style="font-weight:700;margin-bottom:6px"><span class="tag tag-gestion">GESTION</span> Classes 6 et 7</div><div style="font-size:0.85rem;color:var(--text-secondary)">Activité : charges et produits → résultat</div></div></div></div><div class="quiz-grid" id="ex6-grid"></div><div id="ex6-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex6-check" onclick="checkEx6()">Vérifier mes réponses</button><button class="btn btn-success hidden" id="ex6-next" onclick="nextExercise()">Exercice suivant →</button></div></div>`;
+}
+function initEx6() {
+  document.getElementById('ex6-grid').innerHTML = EX6_DATA.map((item, i) => `<div class="quiz-item" id="ex6-item-${i}" style="flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px"><div style="flex:1;min-width:200px"><div class="question-text">${item.op}</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:2px">Compte : ${item.compte}</div></div><div style="display:flex;gap:8px"><div style="text-align:center"><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px">TYPE</div><div style="display:flex;gap:4px"><button class="option-btn" onclick="selectEx6(${i},'bg','B',this)" id="ex6-bg-${i}-B" style="padding:6px 12px;font-size:0.8rem">Bilan</button><button class="option-btn" onclick="selectEx6(${i},'bg','G',this)" id="ex6-bg-${i}-G" style="padding:6px 12px;font-size:0.8rem">Gestion</button></div></div><div style="text-align:center"><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px">SENS</div><div style="display:flex;gap:4px"><button class="option-btn debit-btn" onclick="selectEx6(${i},'dc','D',this)" id="ex6-dc-${i}-D" style="padding:6px 12px;font-size:0.8rem">Débit</button><button class="option-btn credit-btn" onclick="selectEx6(${i},'dc','C',this)" id="ex6-dc-${i}-C" style="padding:6px 12px;font-size:0.8rem">Crédit</button></div></div></div></div><div class="feedback" id="ex6-fb-${i}"></div></div>`).join('');
+}
+let ex6Answers = {};
+function selectEx6(idx,field,val,btn){document.querySelectorAll(`[id^="ex6-${field}-${idx}-"]`).forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');if(!ex6Answers[idx])ex6Answers[idx]={};ex6Answers[idx][field]=val;}
+function checkEx6() {
+  let score=0;const max=EX6_DATA.length*2;
+  EX6_DATA.forEach((item,i)=>{const ans=ex6Answers[i]||{},fb=document.getElementById(`ex6-fb-${i}`),row=document.getElementById(`ex6-item-${i}`);let ls=0;if(ans.bg===item.bg){ls++;document.getElementById(`ex6-bg-${i}-${item.bg}`)?.classList.add('correct');}else{if(ans.bg)document.getElementById(`ex6-bg-${i}-${ans.bg}`)?.classList.add('incorrect');document.getElementById(`ex6-bg-${i}-${item.bg}`)?.classList.add('correct');}if(ans.dc===item.dc){ls++;document.getElementById(`ex6-dc-${i}-${item.dc}`)?.classList.add('correct');}else{if(ans.dc)document.getElementById(`ex6-dc-${i}-${ans.dc}`)?.classList.add('incorrect');document.getElementById(`ex6-dc-${i}-${item.dc}`)?.classList.add('correct');}score+=ls;if(ls===2){row.classList.add('answered-correct');fb.className='feedback show correct-fb';fb.textContent=`✓ ${item.exp}`;}else{row.classList.add('answered-incorrect');fb.className='feedback show incorrect-fb';fb.textContent=`✗ ${item.exp}`;}});
+  state.scores[5]=score;state.maxScores[5]=max;state.completed[5]=true;
+  document.getElementById('ex6-result').innerHTML=`<div class="result-banner ${score>=max*0.7?'success':'info'}"><span style="font-size:1.5rem">${score>=max*0.7?'🎉':'💪'}</span><span>${score}/${max} pts — ${score>=max*0.7?'Excellente synthèse !':'Revois bilan/gestion et débit/crédit.'}</span></div>`;
+  document.getElementById('ex6-check').classList.add('hidden');document.getElementById('ex6-next').classList.remove('hidden');document.querySelectorAll('[id^="ex6-bg-"],[id^="ex6-dc-"]').forEach(b=>b.disabled=true);
+}
+
+// ============= EX7: Le Grand Défi (NEW PCMN) =============
+const ACCT_FULL = '<option value="">— Sélectionne —</option><option value="6040">6040 — Achats de marchandises</option><option value="6100">6100 — Loyers & charges locatives</option><option value="6110">6110 — Entretien & réparations</option><option value="6120">6120 — Fournitures (énergie…)</option><option value="6130">6130 — Rétributions de tiers</option><option value="6150">6150 — Publicité & annonces</option><option value="6160">6160 — Assurances</option><option value="7000">7000 — Ventes de marchandises</option><option value="7430">7430 — Produits de location</option><option value="7500">7500 — Intérêts reçus</option><option value="4110">4110 — TVA à récupérer</option><option value="4510">4510 — TVA à payer</option><option value="4000">4000 — Clients</option><option value="4400">4400 — Fournisseurs</option>';
+function ex7Line(pfx,n){return `<div class="quiz-item" style="flex-direction:column;align-items:stretch;margin-bottom:8px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><label style="font-weight:600;min-width:80px;font-size:0.85rem">Ligne ${n}:</label><select class="entry-select" data-q="${pfx}c${n}" style="flex:1;min-width:180px">${ACCT_FULL}</select><select class="entry-select" data-q="${pfx}s${n}" style="width:100px"><option value="">Sens</option><option value="D">Débit</option><option value="C">Crédit</option></select><input class="entry-input" data-q="${pfx}m${n}" placeholder="Montant" style="width:110px"></div></div>`;}
+
+function renderEx7() {
+  return `<div class="exercise-card"><div class="exercise-number">Exercice 07 / 07</div><div class="exercise-title">🏆 Le Grand Défi</div><div class="exercise-subtitle">Synthèse finale ! Comptabilise 4 opérations variées de la SRL GameZone Frameries.</div><div class="scenario-box"><div class="scenario-icon">🎮</div><div class="scenario-text">Tu es comptable de la <strong>SRL GameZone Frameries</strong> (magasin de jeux vidéo).</div></div>
+  <h3 style="margin:20px 0 8px;color:var(--accent-orange)">🔶 Op. 1 — Achat de consoles</h3><div class="invoice"><div class="invoice-header"><div><div class="company">Nintendo Benelux → SRL GameZone</div></div><div class="details"><div>Fact. n°NB-2025-4412</div><div>5 avril 2025</div></div></div><div class="invoice-line"><span>Consoles Switch HTVA</span><span class="amount">2 400,00 €</span></div><div class="invoice-line"><span>TVA 21 %</span><span class="amount">504,00 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">2 904,00 €</span></div></div>${ex7Line('o1',1)}${ex7Line('o1',2)}${ex7Line('o1',3)}
+  <h3 style="margin:28px 0 8px;color:var(--accent-purple)">🔷 Op. 2 — Facture Proximus</h3><div class="invoice"><div class="invoice-header"><div><div class="company">Proximus → SRL GameZone</div><div style="font-size:0.82rem;color:var(--text-muted)">Internet + téléphone</div></div><div class="details"><div>Fact. n°PX-2025-887</div><div>10 avril 2025</div></div></div><div class="invoice-line"><span>Abonnement HTVA</span><span class="amount">65,00 €</span></div><div class="invoice-line"><span>TVA 21 %</span><span class="amount">13,65 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">78,65 €</span></div></div>${ex7Line('o2',1)}${ex7Line('o2',2)}${ex7Line('o2',3)}
+  <h3 style="margin:28px 0 8px;color:var(--accent-green)">🔷 Op. 3 — Vente de jeux vidéo</h3><div class="invoice"><div class="invoice-header"><div><div class="company">SRL GameZone → Lucas Martin</div><div style="font-size:0.82rem;color:var(--text-muted)">Vente de jeux Switch</div></div><div class="details"><div>Fact. n°GZ-2025-201</div><div>18 avril 2025</div></div></div><div class="invoice-line"><span>Jeux vidéo HTVA</span><span class="amount">150,00 €</span></div><div class="invoice-line"><span>TVA 21 %</span><span class="amount">31,50 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">181,50 €</span></div></div>${ex7Line('o3',1)}${ex7Line('o3',2)}${ex7Line('o3',3)}
+  <h3 style="margin:28px 0 8px;color:var(--accent-pink)">🔷 Op. 4 — Loyer du local</h3><div class="invoice"><div class="invoice-header"><div><div class="company">Immo Frameries → SRL GameZone</div><div style="font-size:0.82rem;color:var(--text-muted)">Loyer mensuel avril 2025</div></div><div class="details"><div>Fact. n°IF-2025-04</div><div>1 avril 2025</div></div></div><div class="invoice-line"><span>Loyer HTVA</span><span class="amount">750,00 €</span></div><div class="invoice-line"><span>TVA 21 %</span><span class="amount">157,50 €</span></div><div class="invoice-line total"><span>Total TVAC</span><span class="amount">907,50 €</span></div></div>${ex7Line('o4',1)}${ex7Line('o4',2)}${ex7Line('o4',3)}
+  <div id="ex7-result"></div><div class="btn-group"><button class="btn btn-outline" onclick="backToMenu()">↩ Menu</button><button class="btn btn-primary" id="ex7-check" onclick="checkEx7()">Vérifier le Grand Défi</button><button class="btn btn-success hidden" id="ex7-next" onclick="finishAll()">Voir mon résultat final 🏆</button></div></div>`;
+}
+const EX7_EXP = { o1:[{c:'6040',s:'D',m:'2400'},{c:'4110',s:'D',m:'504'},{c:'4400',s:'C',m:'2904'}], o2:[{c:'6120',s:'D',m:'65'},{c:'4110',s:'D',m:'13.65'},{c:'4400',s:'C',m:'78.65'}], o3:[{c:'7000',s:'C',m:'150'},{c:'4510',s:'C',m:'31.50'},{c:'4000',s:'D',m:'181.50'}], o4:[{c:'6100',s:'D',m:'750'},{c:'4110',s:'D',m:'157.50'},{c:'4400',s:'C',m:'907.50'}] };
+function checkEx7() {
+  let score=0,max=12;
+  ['o1','o2','o3','o4'].forEach(ok=>{const exp=[...EX7_EXP[ok]];for(let l=1;l<=3;l++){const cs=document.querySelector(`[data-q="${ok}c${l}"]`),ss=document.querySelector(`[data-q="${ok}s${l}"]`),mi=document.querySelector(`[data-q="${ok}m${l}"]`),cv=cs?.value||'',sv=ss?.value||'',mv=parseAmount(mi?.value);const idx=exp.findIndex(e=>{const em=parseFloat(e.m);return e.c===cv&&e.s===sv&&mv!==null&&Math.abs(mv-em)<0.01;});if(idx>=0){score++;cs.classList.add('correct-input');ss.classList.add('correct-input');mi.classList.add('correct-input');exp.splice(idx,1);}else{cs.classList.add('incorrect-input');ss.classList.add('incorrect-input');mi.classList.add('incorrect-input');}cs.disabled=true;ss.disabled=true;mi.disabled=true;}});
+  state.scores[6]=score;state.maxScores[6]=max;state.completed[6]=true;
+  document.getElementById('ex7-result').innerHTML=`<div class="result-banner ${score>=9?'success':score>=5?'info':'error'}"><span style="font-size:1.5rem">${score>=9?'🏆':'💪'}</span><span>${score}/${max} — ${score>=9?'Fantastique ! Tu maîtrises tout !':'Continue, tu progresses !'}</span></div><div class="theory-box" style="margin-top:16px"><h3>📝 Corrections</h3><p><strong>Op. 1 :</strong> 6040 D 2 400 | 4110 D 504 | 4400 C 2 904</p><p><strong>Op. 2 :</strong> 6120 D 65 | 4110 D 13,65 | 4400 C 78,65</p><p><strong>Op. 3 :</strong> 7000 C 150 | 4510 C 31,50 | 4000 D 181,50</p><p><strong>Op. 4 :</strong> 6100 D 750 | 4110 D 157,50 | 4400 C 907,50</p></div>`;
+  document.getElementById('ex7-check').classList.add('hidden');document.getElementById('ex7-next').classList.remove('hidden');if(score>=9)launchConfetti();
+}
+function finishAll(){state.currentExercise=99;renderApp();}
+
+// ============= FINAL SCREEN =============
+function renderFinalScreen() {
+  const ts=state.scores.reduce((a,b)=>a+b,0),tm=state.maxScores.reduce((a,b)=>a+b,0),pct=tm>0?Math.round(ts/tm*100):0;
+  let grade,gc,msg;
+  if(pct>=90){grade='A — Excellent !';gc='var(--accent-green)';msg='Tu maîtrises parfaitement les comptes de gestion !';}
+  else if(pct>=75){grade='B — Très bien !';gc='var(--accent-cyan)';msg='Très bonne compréhension. Quelques détails à revoir.';}
+  else if(pct>=60){grade='C — Bien';gc='var(--accent-blue)';msg='Bonne base ! Revois les exercices 4 et 5.';}
+  else if(pct>=40){grade='D — À améliorer';gc='var(--accent-orange)';msg='Les bases sont là, mais plus de pratique nécessaire.';}
+  else{grade='E — À retravailler';gc='var(--accent-red)';msg='Recommence les exercices et relis la théorie.';}
+  const fs=Math.round(pct/10);
+  app.innerHTML=`${renderHeader()}<div class="final-screen"><div class="exercise-card"><div class="trophy">${pct>=75?'🏆':pct>=50?'🥈':'📚'}</div><div class="final-score" style="color:${gc}">${pct}%</div><div class="grade" style="color:${gc}">${grade}</div><div class="grade-bar">${Array.from({length:10},(_,i)=>`<div class="grade-segment ${i<fs?'filled':''}"></div>`).join('')}</div><p style="color:var(--text-secondary);max-width:500px;margin:0 auto 24px;line-height:1.6">${msg}</p><div style="text-align:left;max-width:500px;margin:0 auto"><h3 style="margin-bottom:12px;font-size:1rem">Détail par exercice :</h3>${EXERCISES.map((ex,i)=>{const s=state.scores[i],m=state.maxScores[i],p=m>0?Math.round(s/m*100):0;return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:1.2rem">${ex.icon}</span><span style="flex:1;font-size:0.9rem">${ex.title}</span><span style="font-family:'Space Mono',monospace;font-size:0.85rem;color:${p>=70?'var(--accent-green)':p>=40?'var(--accent-orange)':'var(--accent-red)'}">${s}/${m}</span><span style="font-size:0.8rem;color:var(--text-muted);width:40px;text-align:right">${p}%</span></div>`;}).join('')}</div><div class="btn-group" style="margin-top:30px"><button class="btn btn-outline" onclick="resetAll()">🔄 Recommencer</button><button class="btn btn-primary" onclick="backToMenu()">↩ Menu principal</button></div></div></div>`;
+  if(pct>=75)launchConfetti();
+}
+function resetAll(){state={currentExercise:-1,scores:[0,0,0,0,0,0,0],maxScores:[0,0,0,0,0,0,0],completed:[false,false,false,false,false,false,false]};ex1Answers={};ex2Answers={};ex4Answers={};ex6Answers={};renderApp();}
+function launchConfetti(){const c=document.createElement('div');c.className='confetti-container';document.body.appendChild(c);const cols=['#3b82f6','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];for(let i=0;i<60;i++){const p=document.createElement('div');p.className='confetti-piece';p.style.left=Math.random()*100+'%';p.style.background=cols[Math.floor(Math.random()*cols.length)];p.style.animationDelay=Math.random()*1.5+'s';p.style.animationDuration=(2+Math.random()*2)+'s';p.style.borderRadius=Math.random()>0.5?'50%':'2px';p.style.width=(6+Math.random()*8)+'px';p.style.height=(6+Math.random()*8)+'px';c.appendChild(p);}setTimeout(()=>c.remove(),4000);}
+createParticles();renderApp();
+
+</script>
+</body>
+</html>
